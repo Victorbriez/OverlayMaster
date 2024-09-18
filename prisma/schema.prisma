@@ -1,0 +1,22 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Overlay {
+  id            Int      @id @default(autoincrement())
+  name          String
+  color_bg_header         String @db.VarChar(7)
+  color_text_header       String @db.VarChar(7)
+  color_bg_body           String @db.VarChar(7)
+  color_bg_left           String @db.VarChar(7)
+  color_bg_right          String @db.VarChar(7)
+  color_text_options_body String @db.VarChar(7)
+  color_text_results_body String @db.VarChar(7)
+  color_bg_footer         String @db.VarChar(7)
+  color_text_footer       String @db.VarChar(7)
+}
