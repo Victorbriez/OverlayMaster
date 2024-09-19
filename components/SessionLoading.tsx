@@ -1,14 +1,15 @@
-import { title } from "@/components/primitives";
+import { CircularProgress } from "@nextui-org/react";
+
 import DefaultLayout from "@/layouts/default";
 
-export default function DocsPage() {
+export const SessionLoading = () => {
   return (
     <DefaultLayout>
       <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
         <div className="inline-block max-w-lg text-center justify-center">
-          <h1 className={title()}>Blog</h1>
+          <CircularProgress color="secondary" label="Chargement..." size="lg" />
         </div>
       </section>
     </DefaultLayout>
   );
-}
+};

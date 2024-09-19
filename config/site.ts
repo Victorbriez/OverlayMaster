@@ -1,27 +1,24 @@
 export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
-  name: "Next.js + NextUI",
-  description: "Make beautiful websites regardless of your design experience.",
+  name: "OverlayMaster",
+  description:
+    "Transformer chaque stream en une expérience unique grâce à des overlays dynamiques et facilement personnalisables.",
   navItems: [
     {
-      label: "Home",
+      label: "Accueil",
       href: "/",
     },
     {
-      label: "Docs",
-      href: "/docs",
+      label: "Prédiction",
+      href: "/prediction",
     },
     {
-      label: "Pricing",
-      href: "/pricing",
+      label: "Sondage",
+      href: "/poll",
     },
     {
-      label: "Blog",
-      href: "/blog",
-    },
-    {
-      label: "About",
+      label: "À propos",
       href: "/about",
     },
   ],
@@ -60,10 +57,10 @@ export const siteConfig = {
     },
   ],
   links: {
-    github: "https://github.com/nextui-org/nextui",
-    twitter: "https://twitter.com/getnextui",
-    docs: "https://nextui-docs-v2.vercel.app",
-    discord: "https://discord.gg/9b6yyZKmH4",
-    sponsor: "https://patreon.com/jrgarciadev",
+    github: "https://www.twitch.tv/",
+    twitter: "https://www.twitch.tv/",
+    docs: "https://www.twitch.tv/",
+    discord: "https://www.twitch.tv/",
+    sponsor: "https://www.twitch.tv/",
   },
 };

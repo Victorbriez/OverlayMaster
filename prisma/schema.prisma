@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Overlay {
+model Prediction {
   id            Int      @id @default(autoincrement())
   name          String
   color_bg_header         String @db.VarChar(7)
@@ -19,4 +19,82 @@ model Overlay {
   color_text_results_body String @db.VarChar(7)
   color_bg_footer         String @db.VarChar(7)
   color_text_footer       String @db.VarChar(7)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Poll {
+  id            Int      @id @default(autoincrement())
+  name          String
+  color_bg_header         String @db.VarChar(7)
+  color_text_header       String @db.VarChar(7)
+  color_bg_body           String @db.VarChar(7)
+  color_bg_left           String @db.VarChar(7)
+  color_bg_right          String @db.VarChar(7)
+  color_text_options_body String @db.VarChar(7)
+  color_text_results_body String @db.VarChar(7)
+  color_bg_footer         String @db.VarChar(7)
+  color_text_footer       String @db.VarChar(7)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id            String          @id @default(cuid())
+  name          String?
+  username      String?         @unique
+  email         String?         @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+ 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+ 
+model Account {
+  id                       String  @id @default(cuid())
+  userId                   String  @unique
+  type                     String
+  provider                 String
+  providerAccountId        String
+  refresh_token            String? @db.Text
+  access_token             String? @db.Text
+  expires_at               Int?
+  token_type               String?
+  scope                    String?
+  id_token                 String? @db.Text
+  session_state            String?
+  refresh_token_expires_in Int?
+  user                     User?   @relation(fields: [userId], references: [id])
+ 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+ 
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+ 
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id])
+ 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+ 
+  @@index([userId])
+}
+ 
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+ 
+  @@unique([identifier, token])
 }

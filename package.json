@@ -3,12 +3,13 @@
 	"version": "0.1.0",
 	"private": true,
 	"scripts": {
-		"dev": "next dev --turbo",
+		"dev": "docker-compose up -d & npx prisma generate & npx prisma migrate dev --name automatic-migration & next dev --turbo",
 		"build": "next build",
 		"start": "next start",
 		"lint": "eslint . --ext .ts,.tsx -c .eslintrc.json --fix"
 	},
 	"dependencies": {
+		"@next-auth/prisma-adapter": "^1.0.7",
 		"@nextui-org/button": "2.0.38",
 		"@nextui-org/code": "2.0.33",
 		"@nextui-org/input": "2.2.5",
@@ -21,11 +22,13 @@
 		"@nextui-org/switch": "2.0.34",
 		"@nextui-org/system": "2.2.6",
 		"@nextui-org/theme": "2.2.11",
+		"@prisma/client": "^5.19.1",
 		"@react-aria/visually-hidden": "3.8.12",
 		"clsx": "2.1.1",
 		"framer-motion": "~11.1.1",
 		"intl-messageformat": "^10.5.0",
 		"next": "14.2.4",
+		"next-auth": "^4.24.7",
 		"next-themes": "^0.2.1",
 		"react": "18.3.1",
 		"react-dom": "18.3.1"

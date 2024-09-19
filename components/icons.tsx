@@ -212,3 +212,28 @@ export const NextUILogo: React.FC<IconSvgProps> = (props) => {
     </svg>
   );
 };
+
+export const TwitchIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => {
+  return (
+    <svg
+      height={size || height}
+      viewBox="0 0 24 24"
+      width={size || width}
+      {...props}
+    >
+      <path
+        d="M2.003 0L0 4.8v16.8h6v2.4h3.6l2.4-2.4H18l6-6V0H2.003zm19.197 13.2l-3.6 3.6h-4.8l-2.4 2.4V16.8H6.002V2.4h15.198v10.8z"
+        fill="currentColor"
+      />
+      <path
+        d="M15.602 5.999h-1.801v4.8h1.801V5.999zm-4.801 0h-1.801v4.8h1.801V5.999z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+};
