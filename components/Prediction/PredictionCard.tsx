@@ -1,9 +1,17 @@
 import React, { useState } from "react";
-import { Card, CardBody, Snippet, Switch, Button } from "@nextui-org/react";
-import { useRouter } from "next/router";
+import {
+  Card,
+  CardBody,
+  Snippet,
+  Switch,
+  CardHeader,
+  Divider,
+  Button,
+} from "@nextui-org/react";
 
-import { PredictionComponent } from "./PredictionComponent";
+import { PredictionComponentOverview } from "./PredictionComponentOverview";
 import { PredictionEditModal } from "./PredictionEditModal";
+import { PredictionDeleteModal } from "./PredictionDeleteModal";
 
 import { PredictionCardProps, PredictionInterface } from "@/types";
 
@@ -12,18 +20,22 @@ const DirectionToggle: React.FC<{
   onChange: (newDirection: "vertical" | "horizontal") => void;
 }> = ({ direction, onChange }) => (
   <div className="flex items-center justify-between mb-4">
-    <span className="font-bold">Horizontal</span>
-    <Switch
-      checked={direction === "vertical"}
-      onChange={(e) => onChange(e.target.checked ? "vertical" : "horizontal")}
-    />
-    <span className="font-bold">Vertical</span>
+    <span className="font-bold">Direction</span>
+    <div className="flex items-center gap-2">
+      <span>Horizontal</span>
+      <Switch
+        checked={direction === "vertical"}
+        onChange={(e) => onChange(e.target.checked ? "vertical" : "horizontal")}
+      />
+      <span>Vertical</span>
+    </div>
   </div>
 );
 
 export const PredictionCard: React.FC<PredictionCardProps> = ({
   prediction: initialPrediction,
   onPredictionUpdate,
+  onPredictionDelete,
 }) => {
   const [direction, setDirection] = useState<"vertical" | "horizontal">(
     "horizontal",
@@ -35,25 +47,29 @@ export const PredictionCard: React.FC<PredictionCardProps> = ({
     setPrediction(updatedPrediction);
     onPredictionUpdate(updatedPrediction);
   };
-  const router = useRouter();
 
   return (
     <Card>
-      <CardBody>
-        <h3 className="text-xl font-bold mb-2">{prediction.name}</h3>
+      <CardHeader className="flex items-center justify-center">
+        <h1 className="text-2xl font-bold">{prediction.name}</h1>
+      </CardHeader>
 
-        <DirectionToggle direction={direction} onChange={setDirection} />
+      <CardBody className="flex justify-end">
+        <PredictionComponentOverview
+          direction={direction}
+          prediction={prediction}
+        />
 
-        <PredictionComponent direction={direction} prediction={prediction} />
+        <Divider className="my-4" />
 
-        <div className="mt-4 flex flex-col gap-2">
+        <div className="flex flex-col gap-2">
+          <DirectionToggle direction={direction} onChange={setDirection} />
+
           <Button
-            color="danger"
-            onClick={() => {
-              alert("Supprimer la prédiction");
-            }}
+            color="primary"
+            onClick={() => window.open(`/prediction/${prediction.id}`)}
           >
-            Supprimer
+            Voir
           </Button>
 
           <PredictionEditModal
@@ -61,29 +77,10 @@ export const PredictionCard: React.FC<PredictionCardProps> = ({
             onSave={handlePredictionUpdate}
           />
 
-          <Button
-            color="primary"
-            onClick={() => {
-              router.push({
-                pathname: `/prediction/${prediction.id}`,
-                query: {
-                  name: prediction.name,
-                  color_bg_header: prediction.color_bg_header,
-                  color_text_header: prediction.color_text_header,
-                  color_bg_body: prediction.color_bg_body,
-                  color_bg_left: prediction.color_bg_left,
-                  color_bg_right: prediction.color_bg_right,
-                  color_text_options_body: prediction.color_text_options_body,
-                  color_text_results_body: prediction.color_text_results_body,
-                  color_bg_footer: prediction.color_bg_footer,
-                  color_text_footer: prediction.color_text_footer,
-                  direction: direction,
-                },
-              });
-            }}
-          >
-            Voir
-          </Button>
+          <PredictionDeleteModal
+            prediction={prediction}
+            onDelete={onPredictionDelete}
+          />
 
           <Snippet
             tooltipProps={{

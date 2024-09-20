@@ -1,52 +1,142 @@
-import { useRouter } from "next/router";
-import { CircularProgress } from "@nextui-org/react";
+import { GetServerSideProps } from "next";
+import { useEffect, useState, useCallback } from "react";
+import useWebSocket from "react-use-websocket";
 
-import { PredictionComponent } from "@/components/Prediction/PredictionComponent";
+import { PredictionInterface, PredictionState } from "@/types";
+import { fetchPredictionById } from "@/lib/prediction";
+import {
+  type TwitchWebsocketMessage,
+  twitchWebsocketMessageSchema,
+} from "@/types/twitch";
+import { subscribeToTopics } from "@/lib/twitch";
 
-export default function PredictionPage() {
-  const router = useRouter();
+// URL initiale pour la connexion WebSocket
+const INITIAL_SOCKET_URL = "wss://eventsub.wss.twitch.tv/ws";
 
-  const {
-    id,
-    name,
-    color_bg_header,
-    color_text_header,
-    color_bg_body,
-    color_bg_left,
-    color_bg_right,
-    color_text_options_body,
-    color_text_results_body,
-    color_bg_footer,
-    color_text_footer,
-    direction,
-  } = router.query;
+const PredictionPage = ({
+  initialPrediction,
+}: {
+  initialPrediction: PredictionInterface | null;
+}) => {
+  // États du composant
+  const [prediction] = useState<PredictionInterface | null>(initialPrediction);
+  const [socketUrl, setSocketUrl] = useState(INITIAL_SOCKET_URL);
+  const [predictionState, setPredictionState] = useState(
+    PredictionState.NOT_STARTED,
+  );
+  const [predictionEvent, setPredictionEvent] =
+    useState<TwitchWebsocketMessage | null>(null);
 
-  if (!router.isReady) {
-    return (
-      <CircularProgress color="secondary" label="Chargement..." size="lg" />
-    );
+  // Hook pour gérer la connexion WebSocket
+  const { lastMessage } = useWebSocket(socketUrl);
+
+  // Fonction pour gérer les changements d'état des prédictions
+  const handlePredictionState = useCallback(
+    (subscriptionType: string, parsed: TwitchWebsocketMessage) => {
+      switch (subscriptionType) {
+        case "channel.prediction.begin":
+          console.log("Prediction started");
+          setPredictionState(PredictionState.STARTED);
+          setPredictionEvent(parsed);
+          break;
+        case "channel.prediction.lock":
+          console.log("Prediction locked");
+          setPredictionState(PredictionState.LOCKED);
+          setPredictionEvent(parsed);
+          break;
+        case "channel.prediction.end":
+          console.log("Prediction ended");
+          setPredictionState(PredictionState.ENDED);
+          setPredictionEvent(parsed);
+          // Reset l'état après 30 secondes
+          setTimeout(() => {
+            setPredictionState(PredictionState.NOT_STARTED);
+          }, 30000);
+          break;
+      }
+    },
+    [],
+  );
+
+  // Effet pour gérer les messages WebSocket
+  useEffect(() => {
+    if (lastMessage) {
+      try {
+        // Parse le message WebSocket
+        const parsed = twitchWebsocketMessageSchema.parse(
+          JSON.parse(lastMessage.data),
+        );
+
+        switch (parsed.metadata.message_type) {
+          case "session_welcome":
+            // S'abonne aux topics nécessaires lors de la connexion initiale
+            if (parsed.payload.session) {
+              const topics = [
+                "channel.prediction.begin",
+                "channel.prediction.progress",
+                "channel.prediction.lock",
+                "channel.prediction.end",
+              ];
+
+              subscribeToTopics(parsed.payload.session.id, topics);
+            }
+            break;
+          case "session_reconnect":
+            // Gère la reconnexion en cas de déconnexion
+            if (parsed.payload.session) {
+              setSocketUrl(
+                parsed.payload.session.reconnect_url ?? INITIAL_SOCKET_URL,
+              );
+            }
+            break;
+          case "notification":
+            // Gère les notifications de changement d'état des prédictions
+            if (parsed.metadata.subscription_type) {
+              handlePredictionState(parsed.metadata.subscription_type, parsed);
+            }
+            break;
+        }
+      } catch (error) {
+        console.error("Error parsing WebSocket message:", error);
+      }
+    }
+  }, [lastMessage, handlePredictionState]);
+
+  // Effet pour vérifier si la prédiction initiale est chargée
+  useEffect(() => {
+    if (!initialPrediction) {
+      console.error("Prediction not found");
+    }
+  }, [initialPrediction]);
+
+  // Rendu du composant
+  return (
+    <section className="flex items-center justify-center h-screen">
+      {prediction ? (
+        <PredictionComponent
+          outcomes={predictionEvent?.payload.event?.outcomes ?? []}
+          predictionCustom={prediction}
+          status={predictionState}
+          title={predictionEvent?.payload.event?.title ?? ""}
+          winner={predictionEvent?.payload.event?.winning_outcome_id}
+        />
+      ) : (
+        <p className="text-center text-red-500">Prédiction non trouvée</p>
+      )}
+    </section>
+  );
+};
+
+// Fonction pour charger les données côté serveur
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const { id } = context.params as { id: string };
+  const prediction = await fetchPredictionById(id);
+
+  if (!prediction) {
+    return { notFound: true };
   }
 
-  const prediction = {
-    id: Number(id),
-    name: name as string,
-    color_bg_header: color_bg_header as string,
-    color_text_header: color_text_header as string,
-    color_bg_body: color_bg_body as string,
-    color_bg_left: color_bg_left as string,
-    color_bg_right: color_bg_right as string,
-    color_text_options_body: color_text_options_body as string,
-    color_text_results_body: color_text_results_body as string,
-    color_bg_footer: color_bg_footer as string,
-    color_text_footer: color_text_footer as string,
-  };
+  return { props: { initialPrediction: prediction } };
+};
 
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <PredictionComponent
-        direction={direction as string}
-        prediction={prediction}
-      />
-    </div>
-  );
-}
+export default PredictionPage;

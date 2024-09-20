@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Button,
   Input,
@@ -17,13 +17,35 @@ const ColorInput: React.FC<{
   value: string;
   onChange: (value: string) => void;
 }> = ({ label, value, onChange }) => (
-  <Input
-    fullWidth
-    label={label}
-    type="color"
-    value={value}
-    onChange={(e) => onChange(e.target.value)}
-  />
+  <div className="flex flex-col mb-4">
+    <label className="text-sm font-semibold mb-2">{label}</label>
+    <Input
+      className="w-full h-10 p-0 rounded-md cursor-pointer"
+      type="color"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  </div>
+);
+
+const TextInput: React.FC<{
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  error?: string;
+}> = ({ label, value, onChange, error }) => (
+  <div className="flex flex-col mb-4">
+    <label className="text-sm font-semibold mb-2">{label}</label>
+    <Input
+      isRequired
+      className="w-full h-10 p-0 rounded-md"
+      placeholder={label}
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
+    {error && <span className="text-red-500 text-sm">{error}</span>}
+  </div>
 );
 
 export const PredictionEditModal: React.FC<PredictionEditModalProps> = ({
@@ -33,12 +55,28 @@ export const PredictionEditModal: React.FC<PredictionEditModalProps> = ({
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [editedPrediction, setEditedPrediction] =
     useState<PredictionInterface>(prediction);
+  const [error, setError] = useState<string>("");
+
+  useEffect(() => {
+    if (isOpen) {
+      setEditedPrediction(prediction);
+      setError("");
+    }
+  }, [isOpen, prediction]);
 
   const handleChange = (key: keyof PredictionInterface, value: string) => {
     setEditedPrediction((prev) => ({ ...prev, [key]: value }));
+    if (key === "name" && value.trim() !== "") {
+      setError("");
+    }
   };
 
   const handleSave = () => {
+    if (editedPrediction.name.trim() === "") {
+      setError("Le nom de la prédiction est obligatoire.");
+
+      return;
+    }
     onSave(editedPrediction);
     onOpenChange();
   };
@@ -69,16 +107,19 @@ export const PredictionEditModal: React.FC<PredictionEditModalProps> = ({
         onClose={onOpenChange}
       >
         <ModalContent>
-          <ModalHeader className="flex flex-col gap-1">
-            Modifier la prédiction
+          <ModalHeader className="flex flex-col gap-1 text-center">
+            <h2 className="text-2xl font-bold">Modifier la prédiction</h2>
+            <p className="text-gray-500">
+              Vous pouvez ajuster les couleurs et le nom de votre prédiction.
+            </p>
           </ModalHeader>
           <ModalBody>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Input
-                fullWidth
+              <TextInput
+                error={error}
                 label="Nom de la prédiction"
                 value={editedPrediction.name}
-                onChange={(e) => handleChange("name", e.target.value)}
+                onChange={(value) => handleChange("name", value)}
               />
               {colorInputs.map(({ key, label }) => (
                 <ColorInput
@@ -94,8 +135,13 @@ export const PredictionEditModal: React.FC<PredictionEditModalProps> = ({
               ))}
             </div>
           </ModalBody>
-          <ModalFooter>
-            <Button color="danger" variant="light" onPress={onOpenChange}>
+          <ModalFooter className="flex justify-end">
+            <Button
+              className="mr-2"
+              color="danger"
+              variant="light"
+              onPress={onOpenChange}
+            >
               Annuler
             </Button>
             <Button color="primary" onPress={handleSave}>

@@ -1,31 +1,18 @@
 import { useSession } from "next-auth/react";
-import { Card, CardBody } from "@nextui-org/react";
-import { useRouter } from "next/router";
 import { useEffect, useState, useCallback } from "react";
+import { CircularProgress } from "@nextui-org/react";
 
 import DefaultLayout from "@/layouts/default";
 import { SessionUnauthenticated } from "@/components/SessionUnauthenticated";
 import { SessionLoading } from "@/components/SessionLoading";
 import { PredictionInterface } from "@/types";
 import { PredictionCard } from "@/components/Prediction/PredictionCard";
-
-const NewPredictionCard: React.FC = () => {
-  const router = useRouter();
-
-  return (
-    <Card isHoverable isPressable onPress={() => router.push("/overlays/new")}>
-      <CardBody className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <p>+ Add New Overlay</p>
-        </div>
-      </CardBody>
-    </Card>
-  );
-};
+import { PredictionNewModal } from "@/components/Prediction/PredictionNewModal";
 
 export default function PredictionPage() {
   const { status } = useSession();
   const [predictions, setPredictions] = useState<PredictionInterface[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchPredictions = useCallback(async () => {
     try {
@@ -35,14 +22,35 @@ export default function PredictionPage() {
       setPredictions(data);
     } catch (error) {
       console.error("Failed to fetch predictions:", error);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    if (status === "authenticated") {
-      fetchPredictions();
-    }
-  }, [status, fetchPredictions]);
+  const handleAddPrediction = useCallback(
+    async (newPrediction: PredictionInterface) => {
+      try {
+        const response = await fetch("/api/prediction/all", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newPrediction),
+        });
+
+        if (response.ok) {
+          const createdPrediction = await response.json();
+
+          setPredictions((prev) => [...prev, createdPrediction]);
+        } else {
+          console.error("Failed to add new prediction");
+        }
+      } catch (error) {
+        console.error("Error adding new prediction:", error);
+      }
+    },
+    [],
+  );
 
   const handlePredictionUpdate = useCallback(
     async (updatedPrediction: PredictionInterface) => {
@@ -74,6 +82,35 @@ export default function PredictionPage() {
     [],
   );
 
+  const handlePredictionDelete = useCallback(
+    async (predictionId: number) => {
+      try {
+        const response = await fetch(`/api/prediction/${predictionId}`, {
+          method: "DELETE",
+        });
+
+        if (response.ok) {
+          setPredictions((prev) =>
+            prev.filter((prediction) => prediction.id !== predictionId),
+          );
+
+          await fetchPredictions();
+        } else {
+          console.error("Failed to delete prediction");
+        }
+      } catch (error) {
+        console.error("Error deleting prediction:", error);
+      }
+    },
+    [fetchPredictions],
+  );
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetchPredictions();
+    }
+  }, [status, fetchPredictions]);
+
   if (status === "unauthenticated") return <SessionUnauthenticated />;
   if (status === "loading") return <SessionLoading />;
 
@@ -81,16 +118,25 @@ export default function PredictionPage() {
     <DefaultLayout>
       <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
         <div className="inline-block max-w-full text-center justify-center w-full">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <NewPredictionCard />
-            {predictions.map((prediction) => (
-              <PredictionCard
-                key={prediction.id}
-                prediction={prediction}
-                onPredictionUpdate={handlePredictionUpdate}
-              />
-            ))}
-          </div>
+          {loading ? (
+            <CircularProgress
+              color="secondary"
+              label="Chargement..."
+              size="lg"
+            />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <PredictionNewModal onAdd={handleAddPrediction} />
+              {predictions.map((prediction) => (
+                <PredictionCard
+                  key={prediction.id}
+                  prediction={prediction}
+                  onPredictionDelete={handlePredictionDelete}
+                  onPredictionUpdate={handlePredictionUpdate}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </DefaultLayout>

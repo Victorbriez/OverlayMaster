@@ -5,7 +5,7 @@ export type IconSvgProps = SVGProps<SVGSVGElement> & {
 };
 
 export interface PredictionInterface {
-  id: number;
+  id?: number;
   name: string;
   color_bg_header: string;
   color_text_header: string;
@@ -21,9 +21,14 @@ export interface PredictionInterface {
 export interface PredictionCardProps {
   prediction: PredictionInterface;
   onPredictionUpdate: (updatedPrediction: PredictionInterface) => void;
+  onPredictionDelete: (predictionId: number) => void;
 }
 
 export interface PredictionComponentProps {
+  prediction: PredictionInterface;
+  direction: string;
+}
+export interface PredictionComponentOverviewProps {
   prediction: PredictionInterface;
   direction: string;
 }
@@ -31,4 +36,16 @@ export interface PredictionComponentProps {
 export interface PredictionEditModalProps {
   prediction: PredictionInterface;
   onSave: (prediction: PredictionInterface) => void;
+}
+
+export interface PredictionDeleteModalProps {
+  prediction: PredictionInterface;
+  onDelete: (predictionId: number) => void;
+}
+
+export enum PredictionState {
+  NOT_STARTED,
+  STARTED,
+  LOCKED,
+  ENDED,
 }

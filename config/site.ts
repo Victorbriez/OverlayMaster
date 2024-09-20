@@ -17,10 +17,6 @@ export const siteConfig = {
       label: "Sondage",
       href: "/poll",
     },
-    {
-      label: "À propos",
-      href: "/about",
-    },
   ],
   navMenuItems: [
     {

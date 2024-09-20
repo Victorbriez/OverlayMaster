@@ -15,7 +15,7 @@ export default function DefaultLayout({
         {children}
       </main>
       <footer className="w-full flex items-center justify-center py-3">
-        <p className="flex items-center gap-1 text-current text-default-600">
+        <p className="flex items-center gap-1 text-current text-default-600 text-center flex-wrap">
           OverlayMaster Copyright © 2024 - All rights reserved
         </p>
       </footer>
